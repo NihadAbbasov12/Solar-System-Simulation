@@ -14,6 +14,10 @@ export const SATURN_EQUATORIAL_RADIUS_SCENE_UNITS = 1;
 // Earth uses the same local-rendering approach at a terrestrial readable size.
 export const EARTH_EQUATORIAL_RADIUS_SCENE_UNITS = 0.32;
 
+// Jupiter is rendered at Saturn-compatible local scale, preserving its larger
+// equatorial radius visually while keeping the orbital scale readable.
+export const JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS = 1.18;
+
 export function auToKilometers(au: number): number {
   return au * KM_PER_AU;
 }
@@ -39,6 +43,16 @@ export function kilometersToEarthLocalRadius(
   return (
     (kilometers / earthEquatorialRadiusKm) *
     EARTH_EQUATORIAL_RADIUS_SCENE_UNITS
+  );
+}
+
+export function kilometersToJupiterLocalRadius(
+  kilometers: number,
+  jupiterEquatorialRadiusKm: number
+): number {
+  return (
+    (kilometers / jupiterEquatorialRadiusKm) *
+    JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS
   );
 }
 
