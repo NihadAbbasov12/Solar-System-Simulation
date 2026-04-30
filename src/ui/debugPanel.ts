@@ -1,11 +1,26 @@
+import type { Vector3 } from "three";
 import { radToDeg } from "../utils/math";
-import type { SaturnUpdateState } from "../saturn/Saturn";
+import type { OrbitalState } from "../physics/orbitalMechanics";
 import type { TimeController } from "../physics/timeController";
+
+export interface DebugUpdateState {
+  orbitalState: OrbitalState;
+  positionScene: Vector3;
+  axisWorld: Vector3;
+  sunDirectionWorld: Vector3;
+  rotationAngleRad: number;
+}
+
+export interface DebugBodyState {
+  name: string;
+  updateState: DebugUpdateState;
+  rotationPeriodHours: number;
+}
 
 export interface DebugPanel {
   element: HTMLElement;
   setVisible: (visible: boolean) => void;
-  update: (state: SaturnUpdateState, timeController: TimeController) => void;
+  update: (bodyState: DebugBodyState, timeController: TimeController) => void;
 }
 
 export function createDebugPanel(): DebugPanel {
@@ -24,6 +39,7 @@ export function createDebugPanel(): DebugPanel {
   panel.append(grid);
 
   const rows = new Map<string, HTMLElement>();
+  addRow(grid, rows, "Body", "body");
   addRow(grid, rows, "Sim date", "date");
   addRow(grid, rows, "Orbit angle", "trueAnomaly");
   addRow(grid, rows, "Mean anomaly", "meanAnomaly");
@@ -38,7 +54,9 @@ export function createDebugPanel(): DebugPanel {
     setVisible: (visible) => {
       panel.hidden = !visible;
     },
-    update: (state, timeController) => {
+    update: (bodyState, timeController) => {
+      const state = bodyState.updateState;
+      rows.get("body")!.textContent = bodyState.name;
       rows.get("date")!.textContent = timeController
         .getSimulatedDate()
         .toISOString()
@@ -52,7 +70,9 @@ export function createDebugPanel(): DebugPanel {
       rows.get("distance")!.textContent = `${state.orbitalState.radiusAU.toFixed(
         3
       )} AU`;
-      rows.get("rotation")!.textContent = "10.656 h / spin";
+      rows.get("rotation")!.textContent = `${bodyState.rotationPeriodHours.toFixed(
+        3
+      )} h / spin`;
       rows.get("speed")!.textContent = `${formatMultiplier(
         timeController.getSpeedMultiplier()
       )}${timeController.isPaused() ? " paused" : ""}`;

@@ -11,6 +11,9 @@ export const SCENE_UNITS_PER_AU = 18;
 // One rendered Saturn equatorial radius equals one scene unit.
 export const SATURN_EQUATORIAL_RADIUS_SCENE_UNITS = 1;
 
+// Earth uses the same local-rendering approach at a terrestrial readable size.
+export const EARTH_EQUATORIAL_RADIUS_SCENE_UNITS = 0.32;
+
 export function auToKilometers(au: number): number {
   return au * KM_PER_AU;
 }
@@ -26,6 +29,16 @@ export function kilometersToSaturnLocalRadius(
   return (
     (kilometers / saturnEquatorialRadiusKm) *
     SATURN_EQUATORIAL_RADIUS_SCENE_UNITS
+  );
+}
+
+export function kilometersToEarthLocalRadius(
+  kilometers: number,
+  earthEquatorialRadiusKm: number
+): number {
+  return (
+    (kilometers / earthEquatorialRadiusKm) *
+    EARTH_EQUATORIAL_RADIUS_SCENE_UNITS
   );
 }
 

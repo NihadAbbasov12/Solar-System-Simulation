@@ -6,8 +6,13 @@ import { createLights } from "./scene/createLights";
 import { createRenderer } from "./scene/createRenderer";
 import { createScene } from "./scene/createScene";
 import { createStarfield } from "./scene/createStarfield";
+import { Earth } from "./earth/Earth";
+import { EARTH_PHYSICAL } from "./earth/earthConstants";
 import { Saturn } from "./saturn/Saturn";
-import { SIMULATION_EPOCH } from "./saturn/saturnConstants";
+import {
+  SATURN_PHYSICAL,
+  SIMULATION_EPOCH
+} from "./saturn/saturnConstants";
 import { TimeController } from "./physics/timeController";
 import {
   createSimulationControls,
@@ -28,42 +33,52 @@ const renderer = createRenderer(canvas);
 const lights = createLights();
 const stars = createStarfield();
 const saturn = new Saturn();
+const earth = new Earth();
 const timeController = new TimeController(SIMULATION_EPOCH);
 const clock = new Clock();
 
-scene.add(lights.group, stars, saturn.group, saturn.orbitPath, saturn.axisHelper);
+scene.add(
+  lights.group,
+  stars,
+  saturn.group,
+  saturn.orbitPath,
+  saturn.axisHelper,
+  earth.group,
+  earth.orbitPath,
+  earth.axisHelper
+);
 
-const initialState = saturn.update(0);
-camera.position.copy(initialState.positionScene).add(new Vector3(0, 3.2, 9.2));
+let saturnState = saturn.update(0);
+let earthState = earth.update(0);
+camera.position.copy(saturnState.positionScene).add(new Vector3(0, 3.2, 9.2));
 
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.dampingFactor = 0.055;
-orbitControls.minDistance = 2.6;
+orbitControls.minDistance = 0.22;
 orbitControls.maxDistance = 420;
-orbitControls.target.copy(initialState.positionScene);
+orbitControls.target.copy(saturnState.positionScene);
 
 let debugEnabled = false;
 let focusMode: FocusMode = "saturn";
-let lastCameraTarget = initialState.positionScene.clone();
+let lastCameraTarget = saturnState.positionScene.clone();
 
 const debugPanel = createDebugPanel();
 const simulationControls = createSimulationControls(timeController, {
   onDebugChanged: (enabled) => {
     debugEnabled = enabled;
     saturn.setDebugVisible(enabled);
+    earth.setDebugVisible(enabled);
     debugPanel.setVisible(enabled);
   },
   onFocusModeChanged: (mode) => {
     focusMode = mode;
-    const target = mode === "saturn" ? saturn.group.position : new Vector3();
-    moveCameraTarget(target, true);
+    moveCameraTarget(getFocusTarget(), true);
   },
   onReset: () => {
-    const state = saturn.update(0);
-    if (focusMode === "saturn") {
-      moveCameraTarget(state.positionScene, true);
-    }
+    saturnState = saturn.update(0);
+    earthState = earth.update(0);
+    moveCameraTarget(getFocusTarget(), true);
   }
 });
 
@@ -79,19 +94,16 @@ window.addEventListener("resize", () => {
 renderer.setAnimationLoop(() => {
   const deltaSeconds = Math.min(clock.getDelta(), 0.1);
   timeController.update(deltaSeconds);
-  const state = saturn.update(timeController.getElapsedSeconds());
+  saturnState = saturn.update(timeController.getElapsedSeconds());
+  earthState = earth.update(timeController.getElapsedSeconds());
 
-  if (focusMode === "saturn") {
-    moveCameraTarget(state.positionScene, false);
-  } else {
-    moveCameraTarget(new Vector3(), false);
-  }
+  moveCameraTarget(getFocusTarget(), false);
 
   orbitControls.update();
   simulationControls.update();
 
   if (debugEnabled) {
-    debugPanel.update(state, timeController);
+    debugPanel.update(getDebugBodyState(), timeController);
   }
 
   renderer.render(scene, camera);
@@ -101,15 +113,51 @@ function moveCameraTarget(target: Vector3, jumpView: boolean): void {
   const targetDelta = target.clone().sub(lastCameraTarget);
 
   if (jumpView) {
-    const viewOffset =
-      focusMode === "saturn"
-        ? new Vector3(0, 3.2, 9.2)
-        : new Vector3(0, 92, 245);
-    camera.position.copy(target).add(viewOffset);
+    camera.position.copy(target).add(getViewOffset());
   } else {
     camera.position.add(targetDelta);
   }
 
   orbitControls.target.copy(target);
   lastCameraTarget.copy(target);
+}
+
+function getFocusTarget(): Vector3 {
+  if (focusMode === "saturn") {
+    return saturnState.positionScene;
+  }
+
+  if (focusMode === "earth") {
+    return earthState.positionScene;
+  }
+
+  return new Vector3();
+}
+
+function getViewOffset(): Vector3 {
+  if (focusMode === "saturn") {
+    return new Vector3(0, 3.2, 9.2);
+  }
+
+  if (focusMode === "earth") {
+    return new Vector3(0, 1.05, 2.85);
+  }
+
+  return new Vector3(0, 92, 245);
+}
+
+function getDebugBodyState() {
+  if (focusMode === "earth") {
+    return {
+      name: "Earth",
+      updateState: earthState,
+      rotationPeriodHours: EARTH_PHYSICAL.rotationPeriodHours
+    };
+  }
+
+  return {
+    name: "Saturn",
+    updateState: saturnState,
+    rotationPeriodHours: SATURN_PHYSICAL.rotationPeriodHours
+  };
 }

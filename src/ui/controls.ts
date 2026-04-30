@@ -1,6 +1,6 @@
 import type { TimeController } from "../physics/timeController";
 
-export type FocusMode = "saturn" | "sun";
+export type FocusMode = "saturn" | "earth" | "sun";
 
 export interface SimulationControlsOptions {
   onDebugChanged: (enabled: boolean) => void;
@@ -24,7 +24,7 @@ export function createSimulationControls(
 
   const title = document.createElement("div");
   title.className = "panel-title";
-  title.innerHTML = "<h1>Saturn System</h1><span>Keplerian model</span>";
+  title.innerHTML = "<h1>Solar System</h1><span>Keplerian model</span>";
   panel.append(title);
 
   const buttonRow = document.createElement("div");
@@ -33,7 +33,7 @@ export function createSimulationControls(
   const pauseButton = createButton("Pause");
   const realTimeButton = createButton("Real Time");
   const resetButton = createButton("Reset");
-  const focusButton = createButton("Focus Sun");
+  const focusButton = createButton("Focus Earth");
   const debugButton = createButton("Debug");
   debugButton.setAttribute("aria-pressed", "false");
 
@@ -89,8 +89,8 @@ export function createSimulationControls(
   });
 
   focusButton.addEventListener("click", () => {
-    focusMode = focusMode === "saturn" ? "sun" : "saturn";
-    focusButton.textContent = focusMode === "saturn" ? "Focus Sun" : "Focus Saturn";
+    focusMode = getNextFocusMode(focusMode);
+    focusButton.textContent = `Focus ${getNextFocusLabel(focusMode)}`;
     options.onFocusModeChanged(focusMode);
     update();
   });
@@ -121,9 +121,7 @@ export function createSimulationControls(
       : multiplier === 1
         ? "Real-time"
         : "Accelerated";
-    modeLine.textContent = `${mode} | Camera target: ${
-      focusMode === "saturn" ? "Saturn" : "Sun"
-    }`;
+    modeLine.textContent = `${mode} | Camera target: ${getFocusLabel(focusMode)}`;
   }
 
   update();
@@ -133,6 +131,34 @@ export function createSimulationControls(
     update,
     getFocusMode: () => focusMode
   };
+}
+
+function getNextFocusMode(mode: FocusMode): FocusMode {
+  if (mode === "saturn") {
+    return "earth";
+  }
+
+  if (mode === "earth") {
+    return "sun";
+  }
+
+  return "saturn";
+}
+
+function getFocusLabel(mode: FocusMode): string {
+  if (mode === "saturn") {
+    return "Saturn";
+  }
+
+  if (mode === "earth") {
+    return "Earth";
+  }
+
+  return "Sun";
+}
+
+function getNextFocusLabel(mode: FocusMode): string {
+  return getFocusLabel(getNextFocusMode(mode));
 }
 
 function createButton(label: string): HTMLButtonElement {
