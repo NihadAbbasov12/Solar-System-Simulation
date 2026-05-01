@@ -23,6 +23,7 @@ npm test
 Saturn constants are stored in `src/saturn/saturnConstants.ts`.
 Jupiter constants are stored in `src/jupiter/jupiterConstants.ts`.
 Mars constants are stored in `src/mars/marsConstants.ts`.
+Mercury constants are stored in `src/mercury/mercuryConstants.ts`.
 
 - Mean radius: 58,232 km
 - Equatorial radius: 60,268 km
@@ -87,6 +88,36 @@ and Deimos on mildly compressed near-equatorial elliptical orbits. The moons
 are enlarged visually because their true radii are too small to inspect at the
 planet scale.
 
+Mercury uses the supplied innermost-planet dossier values:
+
+- Mean radius: 2,439.4 km
+- Equatorial radius: 2,440.53 km
+- Mass: 3.30103e23 kg
+- Density: 5.4289 g/cm^3
+- Surface gravity: 3.70 m/s^2
+- Escape velocity: 4.25 km/s
+- Sidereal rotation period: 58.6462 Earth days
+- Solar day: 175.9421 Earth days
+- Axial tilt: 0.035 deg
+- Geometric albedo: 0.106
+- Semi-major axis: 0.38709927 AU
+- Orbital eccentricity: 0.20563593
+- Orbital period: 87.969257 Earth days
+- Orbital inclination: 7.004979 deg
+- Mean orbital velocity: 47.36 km/s
+- Perihelion: 46,001,200 km
+- Aphelion: 69,816,900 km
+- Natural moons: 0
+- Rings: 0
+
+The rendered Mercury body is a procedural, airless grey-brown rocky spheroid
+with dense crater fields, bright crater rays, Caloris Basin, Rachmaninoff Basin,
+lobate scarp cues, hollows, subtle smooth volcanic plains, polar shadowing, and
+restrained polar-ice hints. It deliberately omits clouds, oceans, rings, moons,
+and any thick atmosphere. Its shader receives inverse-square solar intensity
+from the eccentric Keplerian orbit, while the sidereal rotation period preserves
+the 3:2 spin-orbit resonance ratio in the app's simplified angular-spin model.
+
 Ring regions are implemented as separate D, C, B, A, F, G, and E bands using
 approximate radial extents from Saturn's center. The Cassini Division is visible
 because there is a real gap between the B and A ring meshes. The A ring also has
@@ -121,6 +152,7 @@ and useful camera controls, so the project uses two explicit scales:
 - Local Saturn scale: `1 Saturn equatorial radius = 1 scene unit`
 - Local Jupiter scale: `1 Jupiter equatorial radius = 1.18 scene units`
 - Local Mars scale: `1 Mars equatorial radius = 0.22 scene units`
+- Local Mercury scale: `1 Mercury equatorial radius = 0.16 scene units`
 
 At the orbit scale, Saturn's real equatorial radius would be about 0.00725 scene
 units, which is too small to inspect. The planet and rings are therefore
@@ -146,6 +178,8 @@ Approximated for real-time WebGL:
   not a live meteorological data product.
 - Mars surface regions are procedural terrain cues, not spacecraft texture
   maps or GIS-accurate topography.
+- Mercury surface regions are procedural geology cues, not MESSENGER or
+  BepiColombo texture maps or GIS-accurate topography.
 - Ring shadows are shader approximations plus Three.js shadow flags where
   practical.
 - Sun size and light intensity are visually scaled for readability.
@@ -156,7 +190,8 @@ Approximated for real-time WebGL:
 - Pause/Resume
 - Real Time
 - Reset
-- Focus Sun / Focus Saturn / Focus Jupiter / Focus Mars / Focus Earth
+- Focus Sun / Focus Saturn / Focus Jupiter / Focus Mars / Focus Earth /
+  Focus Mercury
 - Debug mode
 - Logarithmic simulation speed slider from 1x to 1e8x
 - OrbitControls camera navigation with mouse, trackpad, or touch

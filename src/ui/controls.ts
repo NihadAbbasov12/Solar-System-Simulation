@@ -1,6 +1,12 @@
 import type { TimeController } from "../physics/timeController";
 
-export type FocusMode = "saturn" | "jupiter" | "mars" | "earth" | "sun";
+export type FocusMode =
+  | "saturn"
+  | "jupiter"
+  | "mars"
+  | "earth"
+  | "mercury"
+  | "sun";
 
 export interface SimulationControlsOptions {
   onDebugChanged: (enabled: boolean) => void;
@@ -147,6 +153,10 @@ function getNextFocusMode(mode: FocusMode): FocusMode {
   }
 
   if (mode === "earth") {
+    return "mercury";
+  }
+
+  if (mode === "mercury") {
     return "sun";
   }
 
@@ -168,6 +178,10 @@ function getFocusLabel(mode: FocusMode): string {
 
   if (mode === "earth") {
     return "Earth";
+  }
+
+  if (mode === "mercury") {
+    return "Mercury";
   }
 
   return "Sun";
