@@ -23,6 +23,7 @@ npm test
 Saturn constants are stored in `src/saturn/saturnConstants.ts`.
 Jupiter constants are stored in `src/jupiter/jupiterConstants.ts`.
 Mars constants are stored in `src/mars/marsConstants.ts`.
+Venus constants are stored in `src/venus/venusConstants.ts`.
 Mercury constants are stored in `src/mercury/mercuryConstants.ts`.
 
 - Mean radius: 58,232 km
@@ -88,6 +89,38 @@ and Deimos on mildly compressed near-equatorial elliptical orbits. The moons
 are enlarged visually because their true radii are too small to inspect at the
 planet scale.
 
+Venus uses the supplied dense-atmosphere terrestrial planet values:
+
+- Mean radius: 6,051.8 km
+- Mass: 4.86731e24 kg
+- Density: 5.243 g/cm^3
+- Surface gravity: 8.87 m/s^2
+- Escape velocity: 10.36 km/s
+- Sidereal rotation period: 243.02 Earth days, retrograde
+- Solar day: 116.75 Earth days
+- Mean distance from Sun: 108.21 million km
+- Semi-major axis: 0.723332 AU, about 0.72 AU
+- Orbital eccentricity: 0.0068
+- Orbital period: 224.70 Earth days
+- Orbital inclination: 3.39 deg
+- Surface temperature: about 464-470 C
+- Surface pressure: about 93-95 bar
+- Main atmosphere: more than 96 percent carbon dioxide, about 3.5 percent
+  nitrogen, trace gases
+- Clouds: sulfuric-acid cloud layers
+- Intrinsic magnetic field: none
+- Natural moons: 0
+- Rings: 0
+
+The standard Venus rendering is a bright, high-albedo sulfuric-acid cloud deck
+with pale cream/yellow-white tones, broad atmospheric banding, and subtle
+UV-dark streak cues. The rocky surface is intentionally hidden in visible light.
+When debug mode is enabled, Venus blends to a labeled radar-inspired false-color
+topographic visualization showing conceptual highlands, plains, coronae,
+tesserae, rifts, volcanic domes, and volcanic provinces including Ishtar Terra,
+Aphrodite Terra, and Maxwell Montes. That debug visualization is educational
+and non-visible-light.
+
 Mercury uses the supplied innermost-planet dossier values:
 
 - Mean radius: 2,439.4 km
@@ -151,6 +184,7 @@ and useful camera controls, so the project uses two explicit scales:
 - Orbit scale: `1 AU = 18 scene units`
 - Local Saturn scale: `1 Saturn equatorial radius = 1 scene unit`
 - Local Jupiter scale: `1 Jupiter equatorial radius = 1.18 scene units`
+- Local Venus scale: `1 Venus equatorial radius = 0.30 scene units`
 - Local Mars scale: `1 Mars equatorial radius = 0.22 scene units`
 - Local Mercury scale: `1 Mercury equatorial radius = 0.16 scene units`
 
@@ -178,6 +212,8 @@ Approximated for real-time WebGL:
   not a live meteorological data product.
 - Mars surface regions are procedural terrain cues, not spacecraft texture
   maps or GIS-accurate topography.
+- Venus visible-light clouds and debug radar terrain are procedural cues, not
+  spacecraft texture maps, live atmospheric data, or GIS-accurate topography.
 - Mercury surface regions are procedural geology cues, not MESSENGER or
   BepiColombo texture maps or GIS-accurate topography.
 - Ring shadows are shader approximations plus Three.js shadow flags where
@@ -191,14 +227,16 @@ Approximated for real-time WebGL:
 - Real Time
 - Reset
 - Focus Sun / Focus Saturn / Focus Jupiter / Focus Mars / Focus Earth /
-  Focus Mercury
+  Focus Venus / Focus Mercury
 - Debug mode
 - Logarithmic simulation speed slider from 1x to 1e8x
 - OrbitControls camera navigation with mouse, trackpad, or touch
 
 Debug mode shows the tilted axis vector, orbital path, simulated date/time,
 orbital angle, mean anomaly, distance from Sun, rotation speed, speed multiplier,
-and Kepler iteration count.
+Kepler iteration count, and the active visualization mode. For Venus, debug mode
+also switches the planet to a labeled radar-inspired false-color topographic
+view; standard mode remains cloud-covered visible light.
 
 ## Audit Checklist
 

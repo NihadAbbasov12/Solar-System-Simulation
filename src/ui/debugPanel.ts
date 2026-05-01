@@ -15,6 +15,8 @@ export interface DebugBodyState {
   name: string;
   updateState: DebugUpdateState;
   rotationPeriodHours: number;
+  rotationSense?: "prograde" | "retrograde";
+  visualizationMode?: string;
 }
 
 export interface DebugPanel {
@@ -40,6 +42,7 @@ export function createDebugPanel(): DebugPanel {
 
   const rows = new Map<string, HTMLElement>();
   addRow(grid, rows, "Body", "body");
+  addRow(grid, rows, "Visualization", "visualization");
   addRow(grid, rows, "Sim date", "date");
   addRow(grid, rows, "Orbit angle", "trueAnomaly");
   addRow(grid, rows, "Mean anomaly", "meanAnomaly");
@@ -57,6 +60,8 @@ export function createDebugPanel(): DebugPanel {
     update: (bodyState, timeController) => {
       const state = bodyState.updateState;
       rows.get("body")!.textContent = bodyState.name;
+      rows.get("visualization")!.textContent =
+        bodyState.visualizationMode ?? "Visible light";
       rows.get("date")!.textContent = timeController
         .getSimulatedDate()
         .toISOString()
@@ -72,7 +77,7 @@ export function createDebugPanel(): DebugPanel {
       )} AU`;
       rows.get("rotation")!.textContent = `${bodyState.rotationPeriodHours.toFixed(
         3
-      )} h / spin`;
+      )} h / spin${bodyState.rotationSense ? `, ${bodyState.rotationSense}` : ""}`;
       rows.get("speed")!.textContent = `${formatMultiplier(
         timeController.getSpeedMultiplier()
       )}${timeController.isPaused() ? " paused" : ""}`;

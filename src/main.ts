@@ -19,6 +19,8 @@ import {
   SATURN_PHYSICAL,
   SIMULATION_EPOCH
 } from "./saturn/saturnConstants";
+import { Venus } from "./venus/Venus";
+import { VENUS_PHYSICAL } from "./venus/venusConstants";
 import { TimeController } from "./physics/timeController";
 import {
   createSimulationControls,
@@ -42,6 +44,7 @@ const saturn = new Saturn();
 const jupiter = new Jupiter();
 const mars = new Mars();
 const earth = new Earth();
+const venus = new Venus();
 const mercury = new Mercury();
 const timeController = new TimeController(SIMULATION_EPOCH);
 const clock = new Clock();
@@ -61,6 +64,9 @@ scene.add(
   earth.group,
   earth.orbitPath,
   earth.axisHelper,
+  venus.group,
+  venus.orbitPath,
+  venus.axisHelper,
   mercury.group,
   mercury.orbitPath,
   mercury.axisHelper
@@ -70,6 +76,7 @@ let saturnState = saturn.update(0);
 let jupiterState = jupiter.update(0);
 let marsState = mars.update(0);
 let earthState = earth.update(0);
+let venusState = venus.update(0);
 let mercuryState = mercury.update(0);
 camera.position.copy(saturnState.positionScene).add(new Vector3(0, 3.2, 9.2));
 
@@ -92,6 +99,7 @@ const simulationControls = createSimulationControls(timeController, {
     jupiter.setDebugVisible(enabled);
     mars.setDebugVisible(enabled);
     earth.setDebugVisible(enabled);
+    venus.setDebugVisible(enabled);
     mercury.setDebugVisible(enabled);
     debugPanel.setVisible(enabled);
   },
@@ -104,6 +112,7 @@ const simulationControls = createSimulationControls(timeController, {
     jupiterState = jupiter.update(0);
     marsState = mars.update(0);
     earthState = earth.update(0);
+    venusState = venus.update(0);
     mercuryState = mercury.update(0);
     moveCameraTarget(getFocusTarget(), true);
   }
@@ -125,6 +134,7 @@ renderer.setAnimationLoop(() => {
   jupiterState = jupiter.update(timeController.getElapsedSeconds());
   marsState = mars.update(timeController.getElapsedSeconds());
   earthState = earth.update(timeController.getElapsedSeconds());
+  venusState = venus.update(timeController.getElapsedSeconds());
   mercuryState = mercury.update(timeController.getElapsedSeconds());
 
   moveCameraTarget(getFocusTarget(), false);
@@ -161,6 +171,10 @@ function getFocusTarget(): Vector3 {
     return earthState.positionScene;
   }
 
+  if (focusMode === "venus") {
+    return venusState.positionScene;
+  }
+
   if (focusMode === "mercury") {
     return mercuryState.positionScene;
   }
@@ -183,6 +197,10 @@ function getViewOffset(): Vector3 {
 
   if (focusMode === "earth") {
     return new Vector3(0, 1.05, 2.85);
+  }
+
+  if (focusMode === "venus") {
+    return new Vector3(0, 0.98, 2.65);
   }
 
   if (focusMode === "mercury") {
@@ -221,7 +239,20 @@ function getDebugBodyState() {
     return {
       name: "Mercury",
       updateState: mercuryState,
-      rotationPeriodHours: MERCURY_PHYSICAL.siderealRotationDays * 24
+      rotationPeriodHours: MERCURY_PHYSICAL.siderealRotationDays * 24,
+      visualizationMode: "Visible light"
+    };
+  }
+
+  if (focusMode === "venus") {
+    return {
+      name: "Venus",
+      updateState: venusState,
+      rotationPeriodHours: VENUS_PHYSICAL.siderealRotationDays * 24,
+      rotationSense: "retrograde" as const,
+      visualizationMode: debugEnabled
+        ? "Radar topography (false color)"
+        : "Visible sulfuric-acid clouds"
     };
   }
 

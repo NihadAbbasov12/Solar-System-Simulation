@@ -5,6 +5,7 @@ export type FocusMode =
   | "jupiter"
   | "mars"
   | "earth"
+  | "venus"
   | "mercury"
   | "sun";
 
@@ -153,6 +154,10 @@ function getNextFocusMode(mode: FocusMode): FocusMode {
   }
 
   if (mode === "earth") {
+    return "venus";
+  }
+
+  if (mode === "venus") {
     return "mercury";
   }
 
@@ -178,6 +183,10 @@ function getFocusLabel(mode: FocusMode): string {
 
   if (mode === "earth") {
     return "Earth";
+  }
+
+  if (mode === "venus") {
+    return "Venus";
   }
 
   if (mode === "mercury") {

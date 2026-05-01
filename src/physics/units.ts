@@ -14,6 +14,9 @@ export const SATURN_EQUATORIAL_RADIUS_SCENE_UNITS = 1;
 // Earth uses the same local-rendering approach at a terrestrial readable size.
 export const EARTH_EQUATORIAL_RADIUS_SCENE_UNITS = 0.32;
 
+// Venus is Earth-sized but slightly smaller, rendered at terrestrial scale.
+export const VENUS_EQUATORIAL_RADIUS_SCENE_UNITS = 0.3;
+
 // Mars is smaller than Earth but slightly enlarged for inspection at focus.
 export const MARS_EQUATORIAL_RADIUS_SCENE_UNITS = 0.22;
 
