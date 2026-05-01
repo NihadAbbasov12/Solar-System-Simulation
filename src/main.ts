@@ -10,6 +10,8 @@ import { Earth } from "./earth/Earth";
 import { EARTH_PHYSICAL } from "./earth/earthConstants";
 import { Jupiter } from "./jupiter/Jupiter";
 import { JUPITER_PHYSICAL } from "./jupiter/jupiterConstants";
+import { Mars } from "./mars/Mars";
+import { MARS_PHYSICAL } from "./mars/marsConstants";
 import { Saturn } from "./saturn/Saturn";
 import {
   SATURN_PHYSICAL,
@@ -36,6 +38,7 @@ const lights = createLights();
 const stars = createStarfield();
 const saturn = new Saturn();
 const jupiter = new Jupiter();
+const mars = new Mars();
 const earth = new Earth();
 const timeController = new TimeController(SIMULATION_EPOCH);
 const clock = new Clock();
@@ -49,6 +52,9 @@ scene.add(
   jupiter.group,
   jupiter.orbitPath,
   jupiter.axisHelper,
+  mars.group,
+  mars.orbitPath,
+  mars.axisHelper,
   earth.group,
   earth.orbitPath,
   earth.axisHelper
@@ -56,6 +62,7 @@ scene.add(
 
 let saturnState = saturn.update(0);
 let jupiterState = jupiter.update(0);
+let marsState = mars.update(0);
 let earthState = earth.update(0);
 camera.position.copy(saturnState.positionScene).add(new Vector3(0, 3.2, 9.2));
 
@@ -76,6 +83,7 @@ const simulationControls = createSimulationControls(timeController, {
     debugEnabled = enabled;
     saturn.setDebugVisible(enabled);
     jupiter.setDebugVisible(enabled);
+    mars.setDebugVisible(enabled);
     earth.setDebugVisible(enabled);
     debugPanel.setVisible(enabled);
   },
@@ -86,6 +94,7 @@ const simulationControls = createSimulationControls(timeController, {
   onReset: () => {
     saturnState = saturn.update(0);
     jupiterState = jupiter.update(0);
+    marsState = mars.update(0);
     earthState = earth.update(0);
     moveCameraTarget(getFocusTarget(), true);
   }
@@ -105,6 +114,7 @@ renderer.setAnimationLoop(() => {
   timeController.update(deltaSeconds);
   saturnState = saturn.update(timeController.getElapsedSeconds());
   jupiterState = jupiter.update(timeController.getElapsedSeconds());
+  marsState = mars.update(timeController.getElapsedSeconds());
   earthState = earth.update(timeController.getElapsedSeconds());
 
   moveCameraTarget(getFocusTarget(), false);
@@ -141,6 +151,10 @@ function getFocusTarget(): Vector3 {
     return earthState.positionScene;
   }
 
+  if (focusMode === "mars") {
+    return marsState.positionScene;
+  }
+
   if (focusMode === "jupiter") {
     return jupiterState.positionScene;
   }
@@ -155,6 +169,10 @@ function getViewOffset(): Vector3 {
 
   if (focusMode === "earth") {
     return new Vector3(0, 1.05, 2.85);
+  }
+
+  if (focusMode === "mars") {
+    return new Vector3(0, 0.78, 2.08);
   }
 
   if (focusMode === "jupiter") {
@@ -178,6 +196,14 @@ function getDebugBodyState() {
       name: "Jupiter",
       updateState: jupiterState,
       rotationPeriodHours: JUPITER_PHYSICAL.rotationPeriodHours
+    };
+  }
+
+  if (focusMode === "mars") {
+    return {
+      name: "Mars",
+      updateState: marsState,
+      rotationPeriodHours: MARS_PHYSICAL.rotationPeriodHours
     };
   }
 

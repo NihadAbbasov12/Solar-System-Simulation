@@ -14,6 +14,9 @@ export const SATURN_EQUATORIAL_RADIUS_SCENE_UNITS = 1;
 // Earth uses the same local-rendering approach at a terrestrial readable size.
 export const EARTH_EQUATORIAL_RADIUS_SCENE_UNITS = 0.32;
 
+// Mars is smaller than Earth but slightly enlarged for inspection at focus.
+export const MARS_EQUATORIAL_RADIUS_SCENE_UNITS = 0.22;
+
 // Jupiter is rendered at Saturn-compatible local scale, preserving its larger
 // equatorial radius visually while keeping the orbital scale readable.
 export const JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS = 1.18;
@@ -43,6 +46,16 @@ export function kilometersToEarthLocalRadius(
   return (
     (kilometers / earthEquatorialRadiusKm) *
     EARTH_EQUATORIAL_RADIUS_SCENE_UNITS
+  );
+}
+
+export function kilometersToMarsLocalRadius(
+  kilometers: number,
+  marsEquatorialRadiusKm: number
+): number {
+  return (
+    (kilometers / marsEquatorialRadiusKm) *
+    MARS_EQUATORIAL_RADIUS_SCENE_UNITS
   );
 }
 

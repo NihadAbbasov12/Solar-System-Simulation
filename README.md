@@ -22,6 +22,7 @@ npm test
 
 Saturn constants are stored in `src/saturn/saturnConstants.ts`.
 Jupiter constants are stored in `src/jupiter/jupiterConstants.ts`.
+Mars constants are stored in `src/mars/marsConstants.ts`.
 
 - Mean radius: 58,232 km
 - Equatorial radius: 60,268 km
@@ -61,6 +62,31 @@ JPL mean semimajor axes, periods, inclinations, radii, and J2000 mean anomalies.
 The full recognized-moon count is retained as data, while only the Galilean
 moons are rendered as inspectable bodies.
 
+Mars uses the dossier values supplied for the project:
+
+- Mean radius: 3,389.5 km
+- Equatorial radius: 3,396.19 km
+- Polar radius: 3,376.2 km
+- Mass: 6.41691e23 kg
+- Rotation period: 24.62296 hours
+- Axial tilt: 25.2 deg
+- Mean density: 3.934 g/cm^3
+- Surface gravity: 3.71 m/s^2
+- Escape velocity: 5.03 km/s
+- Main atmosphere: carbon dioxide, nitrogen, and argon
+- Mean surface pressure: about 6 mbar
+- Semi-major axis: 1.5237 AU
+- Orbital eccentricity: 0.093329
+- Orbital period: 686.98 Earth days
+- Orbital inclination: 1.85 deg
+- Natural moons: Phobos and Deimos
+
+The rendered Mars system includes a procedural basaltic and dusty surface with
+polar caps, stylized Olympus Mons and Valles Marineris features, plus Phobos
+and Deimos on mildly compressed near-equatorial elliptical orbits. The moons
+are enlarged visually because their true radii are too small to inspect at the
+planet scale.
+
 Ring regions are implemented as separate D, C, B, A, F, G, and E bands using
 approximate radial extents from Saturn's center. The Cassini Division is visible
 because there is a real gap between the B and A ring meshes. The A ring also has
@@ -94,6 +120,7 @@ and useful camera controls, so the project uses two explicit scales:
 - Orbit scale: `1 AU = 18 scene units`
 - Local Saturn scale: `1 Saturn equatorial radius = 1 scene unit`
 - Local Jupiter scale: `1 Jupiter equatorial radius = 1.18 scene units`
+- Local Mars scale: `1 Mars equatorial radius = 0.22 scene units`
 
 At the orbit scale, Saturn's real equatorial radius would be about 0.00725 scene
 units, which is too small to inspect. The planet and rings are therefore
@@ -117,6 +144,8 @@ Approximated for real-time WebGL:
 - Ring density and icy grain structure are procedural shaders and particles.
 - Jupiter's Great Red Spot is a procedural, longitude-locked visual feature,
   not a live meteorological data product.
+- Mars surface regions are procedural terrain cues, not spacecraft texture
+  maps or GIS-accurate topography.
 - Ring shadows are shader approximations plus Three.js shadow flags where
   practical.
 - Sun size and light intensity are visually scaled for readability.
@@ -127,7 +156,7 @@ Approximated for real-time WebGL:
 - Pause/Resume
 - Real Time
 - Reset
-- Focus Sun / Focus Saturn / Focus Jupiter / Focus Earth
+- Focus Sun / Focus Saturn / Focus Jupiter / Focus Mars / Focus Earth
 - Debug mode
 - Logarithmic simulation speed slider from 1x to 1e8x
 - OrbitControls camera navigation with mouse, trackpad, or touch
