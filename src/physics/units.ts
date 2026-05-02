@@ -28,6 +28,10 @@ export const MERCURY_EQUATORIAL_RADIUS_SCENE_UNITS = 0.16;
 // equatorial radius visually while keeping the orbital scale readable.
 export const JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS = 1.18;
 
+// Uranus is rendered at an inspectable ice-giant scale while preserving its
+// smaller size relative to Jupiter and Saturn.
+export const URANUS_EQUATORIAL_RADIUS_SCENE_UNITS = 0.66;
+
 export function auToKilometers(au: number): number {
   return au * KM_PER_AU;
 }
@@ -73,6 +77,16 @@ export function kilometersToJupiterLocalRadius(
   return (
     (kilometers / jupiterEquatorialRadiusKm) *
     JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS
+  );
+}
+
+export function kilometersToUranusLocalRadius(
+  kilometers: number,
+  uranusEquatorialRadiusKm: number
+): number {
+  return (
+    (kilometers / uranusEquatorialRadiusKm) *
+    URANUS_EQUATORIAL_RADIUS_SCENE_UNITS
   );
 }
 

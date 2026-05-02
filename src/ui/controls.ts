@@ -2,6 +2,7 @@ import type { TimeController } from "../physics/timeController";
 
 export type FocusMode =
   | "saturn"
+  | "uranus"
   | "jupiter"
   | "mars"
   | "earth"
@@ -40,7 +41,7 @@ export function createSimulationControls(
   const pauseButton = createButton("Pause");
   const realTimeButton = createButton("Real Time");
   const resetButton = createButton("Reset");
-  const focusButton = createButton("Focus Jupiter");
+  const focusButton = createButton("Focus Uranus");
   const debugButton = createButton("Debug");
   debugButton.setAttribute("aria-pressed", "false");
 
@@ -142,6 +143,10 @@ export function createSimulationControls(
 
 function getNextFocusMode(mode: FocusMode): FocusMode {
   if (mode === "saturn") {
+    return "uranus";
+  }
+
+  if (mode === "uranus") {
     return "jupiter";
   }
 
@@ -171,6 +176,10 @@ function getNextFocusMode(mode: FocusMode): FocusMode {
 function getFocusLabel(mode: FocusMode): string {
   if (mode === "saturn") {
     return "Saturn";
+  }
+
+  if (mode === "uranus") {
+    return "Uranus";
   }
 
   if (mode === "jupiter") {

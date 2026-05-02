@@ -19,6 +19,8 @@ import {
   SATURN_PHYSICAL,
   SIMULATION_EPOCH
 } from "./saturn/saturnConstants";
+import { Uranus } from "./uranus/Uranus";
+import { URANUS_PHYSICAL } from "./uranus/uranusConstants";
 import { Venus } from "./venus/Venus";
 import { VENUS_PHYSICAL } from "./venus/venusConstants";
 import { TimeController } from "./physics/timeController";
@@ -41,6 +43,7 @@ const renderer = createRenderer(canvas);
 const lights = createLights();
 const stars = createStarfield();
 const saturn = new Saturn();
+const uranus = new Uranus();
 const jupiter = new Jupiter();
 const mars = new Mars();
 const earth = new Earth();
@@ -55,6 +58,9 @@ scene.add(
   saturn.group,
   saturn.orbitPath,
   saturn.axisHelper,
+  uranus.group,
+  uranus.orbitPath,
+  uranus.axisHelper,
   jupiter.group,
   jupiter.orbitPath,
   jupiter.axisHelper,
@@ -73,6 +79,7 @@ scene.add(
 );
 
 let saturnState = saturn.update(0);
+let uranusState = uranus.update(0);
 let jupiterState = jupiter.update(0);
 let marsState = mars.update(0);
 let earthState = earth.update(0);
@@ -96,6 +103,7 @@ const simulationControls = createSimulationControls(timeController, {
   onDebugChanged: (enabled) => {
     debugEnabled = enabled;
     saturn.setDebugVisible(enabled);
+    uranus.setDebugVisible(enabled);
     jupiter.setDebugVisible(enabled);
     mars.setDebugVisible(enabled);
     earth.setDebugVisible(enabled);
@@ -109,6 +117,7 @@ const simulationControls = createSimulationControls(timeController, {
   },
   onReset: () => {
     saturnState = saturn.update(0);
+    uranusState = uranus.update(0);
     jupiterState = jupiter.update(0);
     marsState = mars.update(0);
     earthState = earth.update(0);
@@ -131,6 +140,7 @@ renderer.setAnimationLoop(() => {
   const deltaSeconds = Math.min(clock.getDelta(), 0.1);
   timeController.update(deltaSeconds);
   saturnState = saturn.update(timeController.getElapsedSeconds());
+  uranusState = uranus.update(timeController.getElapsedSeconds());
   jupiterState = jupiter.update(timeController.getElapsedSeconds());
   marsState = mars.update(timeController.getElapsedSeconds());
   earthState = earth.update(timeController.getElapsedSeconds());
@@ -183,6 +193,10 @@ function getFocusTarget(): Vector3 {
     return marsState.positionScene;
   }
 
+  if (focusMode === "uranus") {
+    return uranusState.positionScene;
+  }
+
   if (focusMode === "jupiter") {
     return jupiterState.positionScene;
   }
@@ -193,6 +207,10 @@ function getFocusTarget(): Vector3 {
 function getViewOffset(): Vector3 {
   if (focusMode === "saturn") {
     return new Vector3(0, 3.2, 9.2);
+  }
+
+  if (focusMode === "uranus") {
+    return new Vector3(0, 2.8, 8.2);
   }
 
   if (focusMode === "earth") {
@@ -232,6 +250,16 @@ function getDebugBodyState() {
       name: "Jupiter",
       updateState: jupiterState,
       rotationPeriodHours: JUPITER_PHYSICAL.rotationPeriodHours
+    };
+  }
+
+  if (focusMode === "uranus") {
+    return {
+      name: "Uranus",
+      updateState: uranusState,
+      rotationPeriodHours: Math.abs(URANUS_PHYSICAL.rotationPeriodHours),
+      rotationSense: "retrograde" as const,
+      visualizationMode: "Visible methane haze"
     };
   }
 
