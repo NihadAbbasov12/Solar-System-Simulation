@@ -3,6 +3,7 @@ import type { TimeController } from "../physics/timeController";
 export type FocusMode =
   | "saturn"
   | "uranus"
+  | "neptune"
   | "jupiter"
   | "mars"
   | "earth"
@@ -147,6 +148,10 @@ function getNextFocusMode(mode: FocusMode): FocusMode {
   }
 
   if (mode === "uranus") {
+    return "neptune";
+  }
+
+  if (mode === "neptune") {
     return "jupiter";
   }
 
@@ -180,6 +185,10 @@ function getFocusLabel(mode: FocusMode): string {
 
   if (mode === "uranus") {
     return "Uranus";
+  }
+
+  if (mode === "neptune") {
+    return "Neptune";
   }
 
   if (mode === "jupiter") {

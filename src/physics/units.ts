@@ -32,6 +32,9 @@ export const JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS = 1.18;
 // smaller size relative to Jupiter and Saturn.
 export const URANUS_EQUATORIAL_RADIUS_SCENE_UNITS = 0.66;
 
+// Neptune is close to Uranus in size, but slightly smaller at the 1 bar level.
+export const NEPTUNE_EQUATORIAL_RADIUS_SCENE_UNITS = 0.64;
+
 export function auToKilometers(au: number): number {
   return au * KM_PER_AU;
 }
@@ -87,6 +90,16 @@ export function kilometersToUranusLocalRadius(
   return (
     (kilometers / uranusEquatorialRadiusKm) *
     URANUS_EQUATORIAL_RADIUS_SCENE_UNITS
+  );
+}
+
+export function kilometersToNeptuneLocalRadius(
+  kilometers: number,
+  neptuneEquatorialRadiusKm: number
+): number {
+  return (
+    (kilometers / neptuneEquatorialRadiusKm) *
+    NEPTUNE_EQUATORIAL_RADIUS_SCENE_UNITS
   );
 }
 

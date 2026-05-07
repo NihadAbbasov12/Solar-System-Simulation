@@ -22,6 +22,7 @@ npm test
 
 Saturn constants are stored in `src/saturn/saturnConstants.ts`.
 Jupiter constants are stored in `src/jupiter/jupiterConstants.ts`.
+Neptune constants are stored in `src/neptune/neptuneConstants.ts`.
 Mars constants are stored in `src/mars/marsConstants.ts`.
 Venus constants are stored in `src/venus/venusConstants.ts`.
 Mercury constants are stored in `src/mercury/mercuryConstants.ts`.
@@ -63,6 +64,31 @@ and Thebe gossamer dust rings, plus Io, Europa, Ganymede, and Callisto using
 JPL mean semimajor axes, periods, inclinations, radii, and J2000 mean anomalies.
 The full recognized-moon count is retained as data, while only the Galilean
 moons are rendered as inspectable bodies.
+
+Neptune uses NASA/JPL physical parameters and a complete 16-moon catalog:
+
+- Mean radius: 24,622 km
+- Equatorial radius: 24,764 km
+- Polar radius: 24,341 km
+- Mass: 1.024092e26 kg
+- Rotation period: 16.11 hours
+- Axial tilt: 28.32 deg
+- Mean density: 1.638 g/cm^3
+- Surface gravity: about 11.15 m/s^2 at the 1 bar reference level
+- Escape velocity: 23.56 km/s
+- Main atmosphere: molecular hydrogen, helium, and methane
+- Semi-major axis: 30.06992276 AU
+- Orbital eccentricity: 0.00859048
+- Orbital period: 164.79132 Earth years
+- Orbital inclination: 1.77004347 deg
+- Known moons: 16, including provisional S/2002 N 5 and S/2021 N 1
+
+The rendered Neptune system is atmosphere-only, with no solid visible surface.
+It includes muted methane-blue procedural cloud bands, transient dark-vortex
+cues, faint Galle/Leverrier/Lassell/Arago/Adams rings, Adams ring arcs, Triton
+as a detailed retrograde captured moon, and all other known moons as
+performance-aware medium or lightweight bodies. The full implementation package
+is in `docs/neptune-implementation-package.md`.
 
 Mars uses the dossier values supplied for the project:
 
@@ -184,6 +210,7 @@ and useful camera controls, so the project uses two explicit scales:
 - Orbit scale: `1 AU = 18 scene units`
 - Local Saturn scale: `1 Saturn equatorial radius = 1 scene unit`
 - Local Jupiter scale: `1 Jupiter equatorial radius = 1.18 scene units`
+- Local Neptune scale: `1 Neptune equatorial radius = 0.64 scene units`
 - Local Venus scale: `1 Venus equatorial radius = 0.30 scene units`
 - Local Mars scale: `1 Mars equatorial radius = 0.22 scene units`
 - Local Mercury scale: `1 Mercury equatorial radius = 0.16 scene units`
@@ -210,6 +237,9 @@ Approximated for real-time WebGL:
 - Ring density and icy grain structure are procedural shaders and particles.
 - Jupiter's Great Red Spot is a procedural, longitude-locked visual feature,
   not a live meteorological data product.
+- Neptune's dark spots, methane clouds, rings, and Adams arcs are procedural
+  visual approximations; Neptune is never rendered with terrain or a landable
+  surface.
 - Mars surface regions are procedural terrain cues, not spacecraft texture
   maps or GIS-accurate topography.
 - Venus visible-light clouds and debug radar terrain are procedural cues, not
@@ -226,8 +256,8 @@ Approximated for real-time WebGL:
 - Pause/Resume
 - Real Time
 - Reset
-- Focus Sun / Focus Saturn / Focus Jupiter / Focus Mars / Focus Earth /
-  Focus Venus / Focus Mercury
+- Focus Sun / Focus Saturn / Focus Uranus / Focus Neptune / Focus Jupiter /
+  Focus Mars / Focus Earth / Focus Venus / Focus Mercury
 - Debug mode
 - Logarithmic simulation speed slider from 1x to 1e8x
 - OrbitControls camera navigation with mouse, trackpad, or touch
@@ -249,3 +279,5 @@ view; standard mode remains cloud-covered visible light.
 - Constants are stored separately.
 - Physics logic is separate from rendering logic.
 - Kepler solver has unit tests.
+- Neptune stays atmosphere-only, includes faint Adams arcs, and retains all 16
+  known moons with Triton retrograde.
