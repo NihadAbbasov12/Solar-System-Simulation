@@ -97,7 +97,7 @@ export function createSimulationControls(
   panel.append(buttonRow);
 
   let debugEnabled = false;
-  let focusMode: FocusMode = "saturn";
+  let focusMode: FocusMode = "overview";
 
   for (const [mode, button] of focusButtons) {
     button.addEventListener("click", () => {

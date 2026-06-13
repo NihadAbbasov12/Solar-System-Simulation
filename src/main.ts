@@ -109,18 +109,22 @@ let marsState = mars.update(0);
 let earthState = earth.update(0);
 let venusState = venus.update(0);
 let mercuryState = mercury.update(0);
-camera.position.copy(saturnState.positionScene).add(new Vector3(0, 3.2, 9.2));
+// Start on the whole-system overview: camera high above the ecliptic
+// looking down at the Sun-centered origin.
+const OVERVIEW_TARGET = new Vector3(0, 0, 0);
+const OVERVIEW_OFFSET = new Vector3(0, 92, 245);
+camera.position.copy(OVERVIEW_TARGET).add(OVERVIEW_OFFSET);
 
 const orbitControls = new OrbitControls(camera, renderer.domElement);
 orbitControls.enableDamping = true;
 orbitControls.dampingFactor = 0.055;
 orbitControls.minDistance = 0.22;
 orbitControls.maxDistance = 420;
-orbitControls.target.copy(saturnState.positionScene);
+orbitControls.target.copy(OVERVIEW_TARGET);
 
 let debugEnabled = false;
-let focusMode: FocusMode = "saturn";
-let lastCameraTarget = saturnState.positionScene.clone();
+let focusMode: FocusMode = "overview";
+let lastCameraTarget = OVERVIEW_TARGET.clone();
 
 const FOCUS_TRANSITION_SECONDS = 1.6;
 let transitionElapsed = Number.POSITIVE_INFINITY;

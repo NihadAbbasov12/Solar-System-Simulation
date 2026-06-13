@@ -3,5 +3,5 @@ dist
 .vite
 coverage
 *.log
-shots*/
+shots*
 .claude/
