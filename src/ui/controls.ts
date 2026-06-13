@@ -1,15 +1,7 @@
 import type { TimeController } from "../physics/timeController";
+import { BODY_CATALOG, type BodyId } from "./bodyCatalog";
 
-export type FocusMode =
-  | "saturn"
-  | "uranus"
-  | "neptune"
-  | "jupiter"
-  | "mars"
-  | "earth"
-  | "venus"
-  | "mercury"
-  | "sun";
+export type FocusMode = BodyId | "overview";
 
 export interface SimulationControlsOptions {
   onDebugChanged: (enabled: boolean) => void;
@@ -21,6 +13,7 @@ export interface SimulationControls {
   element: HTMLElement;
   update: () => void;
   getFocusMode: () => FocusMode;
+  setFocusMode: (mode: FocusMode) => void;
 }
 
 export function createSimulationControls(
@@ -36,24 +29,41 @@ export function createSimulationControls(
   title.innerHTML = "<h1>Solar System</h1><span>Keplerian model</span>";
   panel.append(title);
 
-  const buttonRow = document.createElement("div");
-  buttonRow.className = "control-row";
+  const readout = document.createElement("div");
+  readout.className = "time-readout";
+  readout.innerHTML = `
+    <div class="time-date" aria-label="Simulated date">-</div>
+    <div class="time-status">-</div>
+  `;
+  const dateLine = readout.querySelector<HTMLElement>(".time-date")!;
+  const statusLine = readout.querySelector<HTMLElement>(".time-status")!;
+  panel.append(readout);
 
-  const pauseButton = createButton("Pause");
-  const realTimeButton = createButton("Real Time");
-  const resetButton = createButton("Reset");
-  const focusButton = createButton("Focus Uranus");
-  const debugButton = createButton("Debug");
-  debugButton.setAttribute("aria-pressed", "false");
+  const focusHeading = document.createElement("div");
+  focusHeading.className = "section-heading";
+  focusHeading.textContent = "Focus";
+  panel.append(focusHeading);
 
-  buttonRow.append(
-    pauseButton,
-    realTimeButton,
-    resetButton,
-    focusButton,
-    debugButton
-  );
-  panel.append(buttonRow);
+  const focusGrid = document.createElement("div");
+  focusGrid.className = "focus-grid";
+  panel.append(focusGrid);
+
+  const focusButtons = new Map<FocusMode, HTMLButtonElement>();
+
+  const overviewButton = createFocusButton("System", "#cfd8dc");
+  focusGrid.append(overviewButton);
+  focusButtons.set("overview", overviewButton);
+
+  for (const entry of BODY_CATALOG) {
+    const button = createFocusButton(entry.label, entry.accentColor);
+    focusGrid.append(button);
+    focusButtons.set(entry.id, button);
+  }
+
+  const speedHeading = document.createElement("div");
+  speedHeading.className = "section-heading";
+  speedHeading.textContent = "Time scale";
+  panel.append(speedHeading);
 
   const sliderBlock = document.createElement("label");
   sliderBlock.className = "slider-block";
@@ -63,7 +73,7 @@ export function createSimulationControls(
       <output>1x</output>
     </span>
   `;
-  const speedOutput = sliderBlock.querySelector("output");
+  const speedOutput = sliderBlock.querySelector("output")!;
   const speedSlider = document.createElement("input");
   speedSlider.type = "range";
   speedSlider.min = "0";
@@ -71,14 +81,31 @@ export function createSimulationControls(
   speedSlider.step = "0.01";
   speedSlider.value = "0";
   sliderBlock.append(speedSlider);
+  const speedHint = document.createElement("div");
+  speedHint.className = "speed-hint";
+  sliderBlock.append(speedHint);
   panel.append(sliderBlock);
 
-  const modeLine = document.createElement("div");
-  modeLine.className = "mode-line";
-  panel.append(modeLine);
+  const buttonRow = document.createElement("div");
+  buttonRow.className = "control-row";
+  const pauseButton = createActionButton("Pause");
+  const realTimeButton = createActionButton("Real time");
+  const resetButton = createActionButton("Reset");
+  const debugButton = createActionButton("Debug");
+  debugButton.setAttribute("aria-pressed", "false");
+  buttonRow.append(pauseButton, realTimeButton, resetButton, debugButton);
+  panel.append(buttonRow);
 
   let debugEnabled = false;
   let focusMode: FocusMode = "saturn";
+
+  for (const [mode, button] of focusButtons) {
+    button.addEventListener("click", () => {
+      focusMode = mode;
+      options.onFocusModeChanged(mode);
+      update();
+    });
+  }
 
   pauseButton.addEventListener("click", () => {
     timeController.togglePaused();
@@ -94,13 +121,6 @@ export function createSimulationControls(
   resetButton.addEventListener("click", () => {
     timeController.reset();
     options.onReset();
-    update();
-  });
-
-  focusButton.addEventListener("click", () => {
-    focusMode = getNextFocusMode(focusMode);
-    focusButton.textContent = `Focus ${getNextFocusLabel(focusMode)}`;
-    options.onFocusModeChanged(focusMode);
     update();
   });
 
@@ -120,17 +140,23 @@ export function createSimulationControls(
   function update(): void {
     pauseButton.textContent = timeController.isPaused() ? "Resume" : "Pause";
     const multiplier = timeController.getSpeedMultiplier();
+    speedOutput.textContent = formatMultiplier(multiplier);
+    speedHint.textContent = `1 s real time = ${formatSimulatedSpan(multiplier)}`;
 
-    if (speedOutput) {
-      speedOutput.textContent = formatMultiplier(multiplier);
-    }
-
+    dateLine.textContent = formatSimulatedDate(
+      timeController.getSimulatedDate()
+    );
     const mode = timeController.isPaused()
       ? "Paused"
       : multiplier === 1
         ? "Real-time"
         : "Accelerated";
-    modeLine.textContent = `${mode} | Camera target: ${getFocusLabel(focusMode)}`;
+    statusLine.textContent = mode;
+    statusLine.dataset.state = mode.toLowerCase();
+
+    for (const [buttonMode, button] of focusButtons) {
+      button.setAttribute("aria-pressed", String(buttonMode === focusMode));
+    }
   }
 
   update();
@@ -138,92 +164,85 @@ export function createSimulationControls(
   return {
     element: panel,
     update,
-    getFocusMode: () => focusMode
+    getFocusMode: () => focusMode,
+    setFocusMode: (mode) => {
+      focusMode = mode;
+      update();
+    }
   };
 }
 
-function getNextFocusMode(mode: FocusMode): FocusMode {
-  if (mode === "saturn") {
-    return "uranus";
-  }
+function createFocusButton(
+  label: string,
+  accentColor: string
+): HTMLButtonElement {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "focus-button";
+  button.setAttribute("aria-pressed", "false");
+  button.style.setProperty("--accent", accentColor);
 
-  if (mode === "uranus") {
-    return "neptune";
-  }
-
-  if (mode === "neptune") {
-    return "jupiter";
-  }
-
-  if (mode === "jupiter") {
-    return "mars";
-  }
-
-  if (mode === "mars") {
-    return "earth";
-  }
-
-  if (mode === "earth") {
-    return "venus";
-  }
-
-  if (mode === "venus") {
-    return "mercury";
-  }
-
-  if (mode === "mercury") {
-    return "sun";
-  }
-
-  return "saturn";
+  const dot = document.createElement("span");
+  dot.className = "focus-dot";
+  const text = document.createElement("span");
+  text.textContent = label;
+  button.append(dot, text);
+  return button;
 }
 
-function getFocusLabel(mode: FocusMode): string {
-  if (mode === "saturn") {
-    return "Saturn";
-  }
-
-  if (mode === "uranus") {
-    return "Uranus";
-  }
-
-  if (mode === "neptune") {
-    return "Neptune";
-  }
-
-  if (mode === "jupiter") {
-    return "Jupiter";
-  }
-
-  if (mode === "mars") {
-    return "Mars";
-  }
-
-  if (mode === "earth") {
-    return "Earth";
-  }
-
-  if (mode === "venus") {
-    return "Venus";
-  }
-
-  if (mode === "mercury") {
-    return "Mercury";
-  }
-
-  return "Sun";
-}
-
-function getNextFocusLabel(mode: FocusMode): string {
-  return getFocusLabel(getNextFocusMode(mode));
-}
-
-function createButton(label: string): HTMLButtonElement {
+function createActionButton(label: string): HTMLButtonElement {
   const button = document.createElement("button");
   button.type = "button";
   button.className = "control-button";
   button.textContent = label;
   return button;
+}
+
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec"
+];
+
+function formatSimulatedDate(date: Date): string {
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = MONTH_NAMES[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+  const hours = String(date.getUTCHours()).padStart(2, "0");
+  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
+  const seconds = String(date.getUTCSeconds()).padStart(2, "0");
+  return `${day} ${month} ${year} ${hours}:${minutes}:${seconds} UTC`;
+}
+
+function formatSimulatedSpan(multiplier: number): string {
+  const seconds = multiplier;
+
+  if (seconds < 60) {
+    return `${seconds.toFixed(seconds === 1 ? 0 : 1)} s`;
+  }
+
+  if (seconds < 3_600) {
+    return `${(seconds / 60).toFixed(1)} min`;
+  }
+
+  if (seconds < 86_400) {
+    return `${(seconds / 3_600).toFixed(1)} h`;
+  }
+
+  if (seconds < 31_557_600) {
+    return `${(seconds / 86_400).toFixed(1)} d`;
+  }
+
+  return `${(seconds / 31_557_600).toFixed(2)} y`;
 }
 
 function formatMultiplier(multiplier: number): string {

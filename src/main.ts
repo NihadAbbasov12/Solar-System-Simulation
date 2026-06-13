@@ -2,10 +2,12 @@ import "./style.css";
 import { Clock, Vector3 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createCamera } from "./scene/createCamera";
+import { createComposer } from "./scene/createComposer";
 import { createLights } from "./scene/createLights";
 import { createRenderer } from "./scene/createRenderer";
 import { createScene } from "./scene/createScene";
 import { createStarfield } from "./scene/createStarfield";
+import { createSun } from "./scene/createSun";
 import { Earth } from "./earth/Earth";
 import { EARTH_PHYSICAL } from "./earth/earthConstants";
 import { Jupiter } from "./jupiter/Jupiter";
@@ -26,11 +28,15 @@ import { URANUS_PHYSICAL } from "./uranus/uranusConstants";
 import { Venus } from "./venus/Venus";
 import { VENUS_PHYSICAL } from "./venus/venusConstants";
 import { TimeController } from "./physics/timeController";
+import { SECONDS_PER_DAY } from "./physics/units";
+import { easeInOutCubic } from "./utils/math";
+import { createBodyLabels } from "./ui/bodyLabels";
 import {
   createSimulationControls,
   type FocusMode
 } from "./ui/controls";
 import { createDebugPanel } from "./ui/debugPanel";
+import { createInfoPanel } from "./ui/infoPanel";
 
 const canvas = document.querySelector<HTMLCanvasElement>("#scene");
 const uiRoot = document.querySelector<HTMLDivElement>("#ui-root");
@@ -42,8 +48,14 @@ if (!canvas || !uiRoot) {
 const scene = createScene();
 const camera = createCamera();
 const renderer = createRenderer(canvas);
+const { composer, setSize: setComposerSize } = createComposer(
+  renderer,
+  scene,
+  camera
+);
 const lights = createLights();
 const stars = createStarfield();
+const sun = createSun();
 const saturn = new Saturn();
 const uranus = new Uranus();
 const neptune = new Neptune();
@@ -57,7 +69,8 @@ const clock = new Clock();
 
 scene.add(
   lights.group,
-  stars,
+  stars.group,
+  sun.group,
   saturn.group,
   saturn.orbitPath,
   saturn.axisHelper,
@@ -84,6 +97,10 @@ scene.add(
   mercury.axisHelper
 );
 
+// Compile every shader up front so no material stalls mid-flight the first
+// time a body (notably the Sun) enters the camera frustum.
+renderer.compile(scene, camera);
+
 let saturnState = saturn.update(0);
 let uranusState = uranus.update(0);
 let neptuneState = neptune.update(0);
@@ -105,7 +122,13 @@ let debugEnabled = false;
 let focusMode: FocusMode = "saturn";
 let lastCameraTarget = saturnState.positionScene.clone();
 
+const FOCUS_TRANSITION_SECONDS = 1.6;
+let transitionElapsed = Number.POSITIVE_INFINITY;
+const transitionFromTarget = new Vector3();
+const transitionFromOffset = new Vector3();
+
 const debugPanel = createDebugPanel();
+const infoPanel = createInfoPanel();
 const simulationControls = createSimulationControls(timeController, {
   onDebugChanged: (enabled) => {
     debugEnabled = enabled;
@@ -121,7 +144,7 @@ const simulationControls = createSimulationControls(timeController, {
   },
   onFocusModeChanged: (mode) => {
     focusMode = mode;
-    moveCameraTarget(getFocusTarget(), true);
+    beginFocusTransition();
   },
   onReset: () => {
     saturnState = saturn.update(0);
@@ -132,54 +155,117 @@ const simulationControls = createSimulationControls(timeController, {
     earthState = earth.update(0);
     venusState = venus.update(0);
     mercuryState = mercury.update(0);
-    moveCameraTarget(getFocusTarget(), true);
+    beginFocusTransition();
   }
 });
 
-uiRoot.append(simulationControls.element, debugPanel.element);
+const bodyLabels = createBodyLabels(
+  [
+    { id: "sun", getPosition: () => new Vector3() },
+    { id: "mercury", getPosition: () => mercuryState.positionScene },
+    { id: "venus", getPosition: () => venusState.positionScene },
+    { id: "earth", getPosition: () => earthState.positionScene },
+    { id: "mars", getPosition: () => marsState.positionScene },
+    { id: "jupiter", getPosition: () => jupiterState.positionScene },
+    { id: "saturn", getPosition: () => saturnState.positionScene },
+    { id: "uranus", getPosition: () => uranusState.positionScene },
+    { id: "neptune", getPosition: () => neptuneState.positionScene }
+  ],
+  (id) => {
+    focusMode = id;
+    simulationControls.setFocusMode(id);
+    beginFocusTransition();
+    syncInfoPanel();
+  }
+);
+
+uiRoot.append(
+  bodyLabels.element,
+  simulationControls.element,
+  infoPanel.element,
+  debugPanel.element
+);
+syncInfoPanel();
 
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const pixelRatio = Math.min(window.devicePixelRatio, 2);
+  renderer.setPixelRatio(pixelRatio);
   renderer.setSize(window.innerWidth, window.innerHeight);
+  setComposerSize(window.innerWidth, window.innerHeight, pixelRatio);
 });
 
 renderer.setAnimationLoop(() => {
   const deltaSeconds = Math.min(clock.getDelta(), 0.1);
   timeController.update(deltaSeconds);
-  saturnState = saturn.update(timeController.getElapsedSeconds());
-  uranusState = uranus.update(timeController.getElapsedSeconds());
-  neptuneState = neptune.update(timeController.getElapsedSeconds());
-  jupiterState = jupiter.update(timeController.getElapsedSeconds());
-  marsState = mars.update(timeController.getElapsedSeconds());
-  earthState = earth.update(timeController.getElapsedSeconds());
-  venusState = venus.update(timeController.getElapsedSeconds());
-  mercuryState = mercury.update(timeController.getElapsedSeconds());
+  const elapsed = timeController.getElapsedSeconds();
+  saturnState = saturn.update(elapsed);
+  uranusState = uranus.update(elapsed);
+  neptuneState = neptune.update(elapsed);
+  jupiterState = jupiter.update(elapsed);
+  marsState = mars.update(elapsed);
+  earthState = earth.update(elapsed);
+  venusState = venus.update(elapsed);
+  mercuryState = mercury.update(elapsed);
 
-  moveCameraTarget(getFocusTarget(), false);
+  sun.update(elapsed / SECONDS_PER_DAY);
+  stars.update(clock.getElapsedTime());
+
+  updateCameraFollow(deltaSeconds);
 
   orbitControls.update();
   simulationControls.update();
+  bodyLabels.update(camera, focusMode === "overview" ? undefined : focusMode);
 
   if (debugEnabled) {
     debugPanel.update(getDebugBodyState(), timeController);
   }
 
-  renderer.render(scene, camera);
+  composer.render();
 });
 
-function moveCameraTarget(target: Vector3, jumpView: boolean): void {
-  const targetDelta = target.clone().sub(lastCameraTarget);
+function beginFocusTransition(): void {
+  transitionElapsed = 0;
+  transitionFromTarget.copy(orbitControls.target);
+  transitionFromOffset.copy(camera.position).sub(orbitControls.target);
+  syncInfoPanel();
+}
 
-  if (jumpView) {
-    camera.position.copy(target).add(getViewOffset());
-  } else {
-    camera.position.add(targetDelta);
+function updateCameraFollow(deltaSeconds: number): void {
+  const liveTarget = getFocusTarget();
+
+  if (transitionElapsed < FOCUS_TRANSITION_SECONDS) {
+    transitionElapsed += deltaSeconds;
+    const progress = Math.min(
+      transitionElapsed / FOCUS_TRANSITION_SECONDS,
+      1
+    );
+    const eased = easeInOutCubic(progress);
+    const blendedTarget = new Vector3().lerpVectors(
+      transitionFromTarget,
+      liveTarget,
+      eased
+    );
+    const blendedOffset = new Vector3().lerpVectors(
+      transitionFromOffset,
+      getViewOffset(),
+      eased
+    );
+    camera.position.copy(blendedTarget).add(blendedOffset);
+    orbitControls.target.copy(blendedTarget);
+    lastCameraTarget.copy(blendedTarget);
+    return;
   }
 
-  orbitControls.target.copy(target);
-  lastCameraTarget.copy(target);
+  const targetDelta = liveTarget.clone().sub(lastCameraTarget);
+  camera.position.add(targetDelta);
+  orbitControls.target.copy(liveTarget);
+  lastCameraTarget.copy(liveTarget);
+}
+
+function syncInfoPanel(): void {
+  infoPanel.setBody(focusMode === "overview" ? undefined : focusMode);
 }
 
 function getFocusTarget(): Vector3 {
@@ -249,6 +335,10 @@ function getViewOffset(): Vector3 {
 
   if (focusMode === "jupiter") {
     return new Vector3(0, 4.2, 12.6);
+  }
+
+  if (focusMode === "sun") {
+    return new Vector3(0, 5.5, 16.5);
   }
 
   return new Vector3(0, 92, 245);

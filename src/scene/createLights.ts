@@ -1,17 +1,8 @@
-import {
-  AmbientLight,
-  Color,
-  Group,
-  Mesh,
-  MeshBasicMaterial,
-  PointLight,
-  SphereGeometry
-} from "three";
+import { AmbientLight, Group, PointLight } from "three";
 
 export interface LightsResult {
   group: Group;
   sunLight: PointLight;
-  sunMesh: Mesh<SphereGeometry, MeshBasicMaterial>;
 }
 
 export function createLights(): LightsResult {
@@ -25,21 +16,11 @@ export function createLights(): LightsResult {
   sunLight.name = "Sun point light";
   sunLight.position.set(0, 0, 0);
   sunLight.castShadow = true;
-  sunLight.shadow.mapSize.set(1024, 1024);
+  sunLight.shadow.mapSize.set(2048, 2048);
   sunLight.shadow.camera.near = 0.1;
   sunLight.shadow.camera.far = 500;
   sunLight.shadow.bias = -0.0004;
   group.add(sunLight);
 
-  const sunMesh = new Mesh(
-    new SphereGeometry(3.0, 48, 24),
-    new MeshBasicMaterial({
-      color: new Color(0xffdf8e)
-    })
-  );
-  sunMesh.name = "Rendered Sun marker";
-  sunMesh.position.copy(sunLight.position);
-  group.add(sunMesh);
-
-  return { group, sunLight, sunMesh };
+  return { group, sunLight };
 }

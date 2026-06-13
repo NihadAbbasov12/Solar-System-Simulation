@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -20,6 +21,7 @@ import {
   NEPTUNE_AXIAL_TILT_RAD,
   NEPTUNE_DATA,
   NEPTUNE_ORBITAL_ELEMENTS,
+  NEPTUNE_POLAR_TO_EQUATORIAL_RATIO,
   NEPTUNE_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./neptuneConstants";
 import {
@@ -27,7 +29,12 @@ import {
   sampleOrbitPath,
   type OrbitalState
 } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
+import {
+  auToSceneDistance,
+  NEPTUNE_EQUATORIAL_RADIUS_SCENE_UNITS,
+  SECONDS_PER_DAY
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface NeptuneUpdateState {
@@ -63,6 +70,16 @@ export class Neptune {
     this.axialTiltGroup.name = "Neptune 28.32 degree axial tilt group";
     this.axialTiltGroup.rotation.z = NEPTUNE_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.neptuneMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: NEPTUNE_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: NEPTUNE_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.045,
+        color: new Color(0.35, 0.6, 0.95),
+        intensity: 0.5,
+        falloff: 3.8
+      })
+    );
     this.axialTiltGroup.add(this.rings.group);
     this.axialTiltGroup.add(this.moons.regularGroup);
     this.group.add(this.axialTiltGroup);

@@ -118,9 +118,14 @@ export const uranusFragmentShader = /* glsl */ `
     float ndotl = dot(normalWorld, sunDirection);
     float diffuse = smoothstep(-0.1, 1.0, ndotl);
     float forwardScatter = pow(max(dot(normalWorld, sunDirection), 0.0), 0.48) * 0.13;
-    float methaneHaze = pow(1.0 - max(dot(normalize(cameraPosition - vWorldPosition), normalWorld), 0.0), 2.0);
 
-    vec3 color = base * (0.04 + diffuse * 1.08 + forwardScatter);
+    // Mild limb darkening: the deep methane haze keeps the edge fairly soft.
+    vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+    float mu = clamp(dot(normalWorld, viewDirection), 0.0, 1.0);
+    float limbDarkening = 0.7 + 0.3 * pow(mu, 0.5);
+    float methaneHaze = pow(1.0 - mu, 2.0);
+
+    vec3 color = base * (0.04 + diffuse * 1.08 + forwardScatter) * limbDarkening;
     color += vec3(0.58, 0.88, 0.92) * methaneHaze * 0.12;
 
     gl_FragColor = vec4(color, 1.0);

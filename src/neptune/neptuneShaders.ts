@@ -134,13 +134,15 @@ export const neptuneFragmentShader = /* glsl */ `
     float ndotl = dot(normalWorld, sunDirection);
     float diffuse = smoothstep(-0.12, 1.0, ndotl);
     float forwardScatter = pow(max(dot(normalWorld, sunDirection), 0.0), 0.46) * 0.12;
-    float rim = pow(
-      1.0 - max(dot(normalize(cameraPosition - vWorldPosition), normalWorld), 0.0),
-      2.15
-    );
 
-    vec3 color = base * (0.035 + diffuse * 1.04 + forwardScatter);
-    color += vec3(0.28, 0.60, 0.68) * rim * 0.105;
+    // Mild limb darkening softened by Neptune's high methane haze.
+    vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+    float mu = clamp(dot(normalWorld, viewDirection), 0.0, 1.0);
+    float limbDarkening = 0.68 + 0.32 * pow(mu, 0.52);
+    float rim = pow(1.0 - mu, 2.15);
+
+    vec3 color = base * (0.035 + diffuse * 1.04 + forwardScatter) * limbDarkening;
+    color += vec3(0.28, 0.60, 0.68) * rim * 0.09;
 
     gl_FragColor = vec4(color, 1.0);
     #include <tonemapping_fragment>

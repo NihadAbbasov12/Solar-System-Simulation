@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -12,10 +13,16 @@ import { createMartianMoons, type MartianMoonsResult } from "./createMartianMoon
 import {
   MARS_AXIAL_TILT_RAD,
   MARS_ORBITAL_ELEMENTS,
+  MARS_POLAR_TO_EQUATORIAL_RATIO,
   MARS_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./marsConstants";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
 import { calculateOrbitalState, sampleOrbitPath, type OrbitalState } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import {
+  auToSceneDistance,
+  MARS_EQUATORIAL_RADIUS_SCENE_UNITS,
+  SECONDS_PER_DAY
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface MarsUpdateState {
@@ -49,6 +56,16 @@ export class Mars {
     this.axialTiltGroup.name = "Mars axial tilt group";
     this.axialTiltGroup.rotation.z = MARS_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.marsMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: MARS_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: MARS_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.045,
+        color: new Color(0.85, 0.55, 0.35),
+        intensity: 0.4,
+        falloff: 4.2
+      })
+    );
     this.axialTiltGroup.add(this.moons.group);
     this.group.add(this.axialTiltGroup);
 

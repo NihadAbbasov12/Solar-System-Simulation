@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -13,10 +14,16 @@ import { createJupiterRings } from "./createJupiterRings";
 import {
   JUPITER_AXIAL_TILT_RAD,
   JUPITER_ORBITAL_ELEMENTS,
+  JUPITER_POLAR_TO_EQUATORIAL_RATIO,
   JUPITER_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./jupiterConstants";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
 import { calculateOrbitalState, sampleOrbitPath, type OrbitalState } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import {
+  auToSceneDistance,
+  JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS,
+  SECONDS_PER_DAY
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface JupiterUpdateState {
@@ -51,6 +58,16 @@ export class Jupiter {
     this.axialTiltGroup.name = "Jupiter axial tilt group";
     this.axialTiltGroup.rotation.z = JUPITER_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.jupiterMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: JUPITER_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: JUPITER_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.03,
+        color: new Color(0.78, 0.72, 0.6),
+        intensity: 0.45,
+        falloff: 4.6
+      })
+    );
     this.axialTiltGroup.add(this.rings.group);
     this.axialTiltGroup.add(this.galileanMoons.group);
     this.group.add(this.axialTiltGroup);

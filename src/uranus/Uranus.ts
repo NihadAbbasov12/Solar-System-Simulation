@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -17,14 +18,20 @@ import {
   URANUS_AXIAL_TILT_RAD,
   URANUS_DATA,
   URANUS_ORBITAL_ELEMENTS,
+  URANUS_POLAR_TO_EQUATORIAL_RATIO,
   URANUS_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./uranusConstants";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
 import {
   calculateOrbitalState,
   sampleOrbitPath,
   type OrbitalState
 } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import {
+  auToSceneDistance,
+  SECONDS_PER_DAY,
+  URANUS_EQUATORIAL_RADIUS_SCENE_UNITS
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface UranusUpdateState {
@@ -60,6 +67,16 @@ export class Uranus {
     this.axialTiltGroup.name = "Uranus 97.77 degree axial tilt group";
     this.axialTiltGroup.rotation.z = URANUS_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.uranusMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: URANUS_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: URANUS_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.04,
+        color: new Color(0.55, 0.85, 0.88),
+        intensity: 0.45,
+        falloff: 4.0
+      })
+    );
     this.axialTiltGroup.add(this.rings.group);
     this.axialTiltGroup.add(this.moons.regularGroup);
     this.group.add(this.axialTiltGroup);
