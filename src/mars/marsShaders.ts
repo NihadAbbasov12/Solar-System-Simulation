@@ -70,6 +70,21 @@ export const marsFragmentShader = /* glsl */ `
     return atan(sin(a - b), cos(a - b));
   }
 
+  // Schueler screen-space bump mapping: perturbs the shading normal from a
+  // procedural height field so relief catches directional sunlight.
+  vec3 perturbNormal(vec3 normalWorld, vec3 worldPosition, float height, float strength) {
+    vec3 dpdx = dFdx(worldPosition);
+    vec3 dpdy = dFdy(worldPosition);
+    float dhdx = dFdx(height);
+    float dhdy = dFdy(height);
+    vec3 r1 = cross(dpdy, normalWorld);
+    vec3 r2 = cross(normalWorld, dpdx);
+    float det = dot(dpdx, r1);
+    det = sign(det) * max(abs(det), 1e-7);
+    vec3 grad = (r1 * dhdx + r2 * dhdy) / det;
+    return normalize(normalWorld - strength * grad);
+  }
+
   void main() {
     vec3 shape = normalize(vShapePosition);
     float latitude = asin(clamp(shape.y, -1.0, 1.0));
@@ -113,7 +128,18 @@ export const marsFragmentShader = /* glsl */ `
     iceCap *= smoothstep(0.38, 0.72, seasonalEdge + absLatitude * 0.56);
     surface = mix(surface, polarIce, iceCap);
 
-    vec3 normalWorld = normalize(vWorldNormal);
+    float reliefHeight =
+      terrain * 0.35 +
+      olympus * 1.4 -
+      canyon * 1.2 -
+      craterMask * 0.3 +
+      fineDust * 0.08;
+    vec3 normalWorld = perturbNormal(
+      normalize(vWorldNormal),
+      vWorldPosition,
+      reliefHeight,
+      0.006
+    );
     vec3 sunDirection = normalize(uSunDirectionWorld);
     float ndotl = dot(normalWorld, sunDirection);
     float diffuse = smoothstep(-0.08, 1.0, ndotl);

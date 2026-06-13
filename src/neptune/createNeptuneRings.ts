@@ -28,6 +28,7 @@ import {
   kilometersToNeptuneLocalRadius,
   NEPTUNE_EQUATORIAL_RADIUS_SCENE_UNITS
 } from "../physics/units";
+import { attachDistanceFade } from "../utils/distanceFade";
 import { degToRad, lerp, seededRandom, TAU } from "../utils/math";
 
 export interface NeptuneRingMaterialEntry {
@@ -183,6 +184,7 @@ function createRingParticleLayer(
   const particles = new Points(geometry, material);
   particles.name = "Neptune sparse ring and arc particles";
   particles.renderOrder = 22;
+  attachDistanceFade(particles, material.opacity, 14, 45);
   return particles;
 }
 

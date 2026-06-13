@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -12,10 +13,16 @@ import { createSaturnMesh } from "./createSaturnMesh";
 import {
   SATURN_AXIAL_TILT_RAD,
   SATURN_ORBITAL_ELEMENTS,
+  SATURN_POLAR_TO_EQUATORIAL_RATIO,
   SATURN_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./saturnConstants";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
 import { calculateOrbitalState, sampleOrbitPath, type OrbitalState } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import {
+  auToSceneDistance,
+  SATURN_EQUATORIAL_RADIUS_SCENE_UNITS,
+  SECONDS_PER_DAY
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface SaturnUpdateState {
@@ -49,6 +56,16 @@ export class Saturn {
     this.axialTiltGroup.name = "Saturn axial tilt group";
     this.axialTiltGroup.rotation.z = SATURN_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.saturnMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: SATURN_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: SATURN_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.035,
+        color: new Color(0.85, 0.78, 0.6),
+        intensity: 0.4,
+        falloff: 4.6
+      })
+    );
     this.axialTiltGroup.add(this.rings.group);
     this.group.add(this.axialTiltGroup);
 

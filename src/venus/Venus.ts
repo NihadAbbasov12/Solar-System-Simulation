@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -12,10 +13,16 @@ import {
   VENUS_AXIAL_TILT_RAD,
   VENUS_CLOUD_SUPER_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND,
   VENUS_ORBITAL_ELEMENTS,
+  VENUS_POLAR_TO_EQUATORIAL_RATIO,
   VENUS_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./venusConstants";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
 import { calculateOrbitalState, sampleOrbitPath, type OrbitalState } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import {
+  auToSceneDistance,
+  SECONDS_PER_DAY,
+  VENUS_EQUATORIAL_RADIUS_SCENE_UNITS
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface VenusUpdateState {
@@ -48,6 +55,16 @@ export class Venus {
     this.axialTiltGroup.name = "Venus retrograde axial tilt group";
     this.axialTiltGroup.rotation.z = VENUS_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.venusMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: VENUS_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: VENUS_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.07,
+        color: new Color(0.96, 0.83, 0.55),
+        intensity: 0.75,
+        falloff: 3.0
+      })
+    );
     this.group.add(this.axialTiltGroup);
 
     this.orbitPath.visible = false;

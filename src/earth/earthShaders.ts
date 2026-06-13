@@ -132,14 +132,43 @@ export const earthFragmentShader = /* glsl */ `
 
     vec3 normalWorld = normalize(vWorldNormal);
     vec3 sunDirection = normalize(uSunDirectionWorld);
+    vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
     float ndotl = dot(normalWorld, sunDirection);
     float diffuse = smoothstep(-0.08, 1.0, ndotl);
-    float forwardScatter = pow(max(dot(normalWorld, sunDirection), 0.0), 0.28) * 0.14;
+    float forwardScatter = pow(max(ndotl, 0.0), 0.28) * 0.14;
 
-    vec3 color = mix(surface, cloud, cloudMask * 0.54);
+    // Clouds shade the ground beneath them before brightening the view.
+    vec3 shadedSurface = surface * (1.0 - cloudMask * 0.30);
+    vec3 color = mix(shadedSurface, cloud, cloudMask * 0.58);
     color *= 0.045 + diffuse * 1.08 + forwardScatter;
 
-    float atmosphere = pow(1.0 - max(dot(normalize(cameraPosition - vWorldPosition), normalWorld), 0.0), 2.2);
+    // Sun glint mirrors off open water but never off land, ice or cloud.
+    vec3 halfVector = normalize(sunDirection + viewDirection);
+    float glint = pow(max(dot(normalWorld, halfVector), 0.0), 140.0);
+    float iceMask = max(polarIce, alpineIce);
+    float waterMask = (1.0 - landMask) * (1.0 - iceMask) * (1.0 - cloudMask);
+    color += vec3(1.25, 1.1, 0.9) * glint * waterMask * diffuse * 0.85;
+
+    // City lights trace coastlines and lowland clusters on the night side.
+    float night = smoothstep(0.05, -0.18, ndotl);
+    float lowland = landMask * (1.0 - mountainMask) * (1.0 - iceMask);
+    float coastal =
+      smoothstep(0.50, 0.565, landValue) *
+      (1.0 - smoothstep(0.60, 0.72, landValue));
+    float cityClusters = smoothstep(0.55, 0.85, fbm(shape * 9.5 + vec3(4.7, 1.3, -2.9)));
+    float cityMask =
+      lowland *
+      cityClusters *
+      (0.35 + 0.65 * coastal) *
+      (1.0 - cloudMask * 0.85) *
+      (1.0 - desertMask * 0.6);
+    color += vec3(1.0, 0.72, 0.38) * cityMask * night * 0.55;
+
+    // Low-angle light reddens along the day/night terminator.
+    float terminator = exp(-ndotl * ndotl * 36.0);
+    color += vec3(0.55, 0.22, 0.06) * terminator * diffuse * 0.16;
+
+    float atmosphere = pow(1.0 - max(dot(viewDirection, normalWorld), 0.0), 2.2);
     color += vec3(0.27, 0.55, 0.78) * atmosphere * (0.11 + diffuse * 0.12);
 
     gl_FragColor = vec4(color, 1.0);
@@ -214,6 +243,21 @@ export const moonFragmentShader = /* glsl */ `
     return value;
   }
 
+  // Schueler screen-space bump mapping: perturbs the shading normal from a
+  // procedural height field so crater relief catches directional sunlight.
+  vec3 perturbNormal(vec3 normalWorld, vec3 worldPosition, float height, float strength) {
+    vec3 dpdx = dFdx(worldPosition);
+    vec3 dpdy = dFdy(worldPosition);
+    float dhdx = dFdx(height);
+    float dhdy = dFdy(height);
+    vec3 r1 = cross(dpdy, normalWorld);
+    vec3 r2 = cross(normalWorld, dpdx);
+    float det = dot(dpdx, r1);
+    det = sign(det) * max(abs(det), 1e-7);
+    vec3 grad = (r1 * dhdx + r2 * dhdy) / det;
+    return normalize(normalWorld - strength * grad);
+  }
+
   void main() {
     vec3 shape = normalize(vShapePosition);
     float maria = smoothstep(0.42, 0.72, fbm(shape * 3.4 + vec3(0.6, -0.2, 1.1)));
@@ -225,7 +269,13 @@ export const moonFragmentShader = /* glsl */ `
     vec3 color = mix(highlands, basalt, maria * 0.72);
     color *= 0.78 + grain * 0.22 - crater * 0.2;
 
-    vec3 normalWorld = normalize(vWorldNormal);
+    float reliefHeight = -crater * 0.6 - maria * 0.12 + grain * 0.1;
+    vec3 normalWorld = perturbNormal(
+      normalize(vWorldNormal),
+      vWorldPosition,
+      reliefHeight,
+      0.01
+    );
     vec3 sunDirection = normalize(uSunDirectionWorld);
     float diffuse = smoothstep(-0.04, 1.0, dot(normalWorld, sunDirection));
     float rim = pow(1.0 - max(dot(normalize(cameraPosition - vWorldPosition), normalWorld), 0.0), 2.2);

@@ -26,6 +26,7 @@ import {
   kilometersToUranusLocalRadius,
   URANUS_EQUATORIAL_RADIUS_SCENE_UNITS
 } from "../physics/units";
+import { attachDistanceFade } from "../utils/distanceFade";
 import { lerp, seededRandom } from "../utils/math";
 
 export interface UranusRingMaterialEntry {
@@ -141,6 +142,7 @@ function createRingParticleLayer(
   const particles = new Points(geometry, material);
   particles.name = "Uranus sparse ring particles";
   particles.renderOrder = 18;
+  attachDistanceFade(particles, material.opacity, 14, 45);
   return particles;
 }
 

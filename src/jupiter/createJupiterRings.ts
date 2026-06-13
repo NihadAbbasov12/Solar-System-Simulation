@@ -17,6 +17,7 @@ import {
   type JupiterRingBandDefinition
 } from "./jupiterConstants";
 import { kilometersToJupiterLocalRadius } from "../physics/units";
+import { attachDistanceFade } from "../utils/distanceFade";
 import { lerp, seededRandom } from "../utils/math";
 
 export interface JupiterRingsResult {
@@ -81,6 +82,7 @@ function createDustParticleLayer(): Points<BufferGeometry, PointsMaterial> {
   const particles = new Points(geometry, material);
   particles.name = "Jupiter ring dust particles";
   particles.renderOrder = 12;
+  attachDistanceFade(particles, material.opacity, 20, 60);
   return particles;
 }
 

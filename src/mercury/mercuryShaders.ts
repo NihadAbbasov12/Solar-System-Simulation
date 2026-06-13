@@ -112,6 +112,21 @@ export const mercuryFragmentShader = /* glsl */ `
     return (dx * dx) / lonRadius + (dy * dy) / latRadius;
   }
 
+  // Schueler screen-space bump mapping: perturbs the shading normal from a
+  // procedural height field so relief catches directional sunlight.
+  vec3 perturbNormal(vec3 normalWorld, vec3 worldPosition, float height, float strength) {
+    vec3 dpdx = dFdx(worldPosition);
+    vec3 dpdy = dFdy(worldPosition);
+    float dhdx = dFdx(height);
+    float dhdy = dFdy(height);
+    vec3 r1 = cross(dpdy, normalWorld);
+    vec3 r2 = cross(normalWorld, dpdx);
+    float det = dot(dpdx, r1);
+    det = sign(det) * max(abs(det), 1e-7);
+    vec3 grad = (r1 * dhdx + r2 * dhdy) / det;
+    return normalize(normalWorld - strength * grad);
+  }
+
   void main() {
     vec3 shape = normalize(vShapePosition);
     float latitude = asin(clamp(shape.y, -1.0, 1.0));
@@ -182,7 +197,18 @@ export const mercuryFragmentShader = /* glsl */ `
     surface *= 1.0 - polarCraterShadow * 0.40;
     surface = mix(surface, vec3(0.78, 0.76, 0.70), polarIce * 0.22);
 
-    vec3 normalWorld = normalize(vWorldNormal);
+    float reliefHeight =
+      craterRim * 0.55 - craterBowl * 0.85 +
+      calorisRim * 0.5 - calorisFloor * 0.35 +
+      rachRim * 0.45 - rachFloor * 0.4 -
+      scarps * 0.3 +
+      megaregolith * 0.18 + highlandTexture * 0.10;
+    vec3 normalWorld = perturbNormal(
+      normalize(vWorldNormal),
+      vWorldPosition,
+      reliefHeight,
+      0.008
+    );
     vec3 sunDirection = normalize(uSunDirectionWorld);
     float ndotl = dot(normalWorld, sunDirection);
     float diffuse = max(ndotl, 0.0);

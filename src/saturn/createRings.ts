@@ -23,6 +23,7 @@ import {
   kilometersToSaturnLocalRadius,
   SATURN_EQUATORIAL_RADIUS_SCENE_UNITS
 } from "../physics/units";
+import { attachDistanceFade } from "../utils/distanceFade";
 import { lerp, seededRandom } from "../utils/math";
 
 export interface RingMaterialEntry {
@@ -146,6 +147,7 @@ function createRingParticleLayer(): Points<BufferGeometry, PointsMaterial> {
   const particles = new Points(geometry, material);
   particles.name = "Procedural ring particles";
   particles.renderOrder = 20;
+  attachDistanceFade(particles, material.opacity, 18, 60);
   return particles;
 }
 

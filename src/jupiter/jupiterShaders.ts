@@ -83,8 +83,12 @@ export const jupiterFragmentShader = /* glsl */ `
     float fineNoise = fbm(vec3(longitude * 7.5 - cloudDrift * 1.8, latitude * 33.0, shape.z * 3.5));
     float filamentNoise = fbm(vec3(longitude * 18.0 + cloudDrift * 3.0, latitude * 44.0, fineNoise * 2.0));
 
-    float beltWave = 0.5 + 0.5 * sin(latitude * 38.0 + broadNoise * 3.4);
-    float jetWave = 0.5 + 0.5 * sin(latitude * 85.0 - fineNoise * 2.1);
+    // Shear turbulence bends belt edges into festoons and eddies.
+    float turbulence = fbm(vec3(longitude * 3.2 + cloudDrift * 0.6, latitude * 9.0, 1.7));
+    float warpedLatitude = latitude + (turbulence - 0.5) * 0.085;
+
+    float beltWave = 0.5 + 0.5 * sin(warpedLatitude * 38.0 + broadNoise * 3.4);
+    float jetWave = 0.5 + 0.5 * sin(warpedLatitude * 85.0 - fineNoise * 2.1);
     float beltMask = smoothstep(0.48, 0.74, beltWave);
     float brightZoneMask = smoothstep(0.18, 0.72, 1.0 - beltWave);
 
@@ -123,9 +127,15 @@ export const jupiterFragmentShader = /* glsl */ `
     float equatorialHaze = 1.0 - smoothstep(0.04, 0.22, abs(dot(fromCenter, axis)));
     base += vec3(0.06, 0.05, 0.035) * equatorialHaze;
 
-    vec3 color = base * (0.035 + diffuse * 1.12 + forwardScatter);
-    float rim = pow(1.0 - max(dot(normalize(cameraPosition - vWorldPosition), normalWorld), 0.0), 2.2);
-    color += vec3(0.52, 0.63, 0.68) * rim * 0.07;
+    // Strong limb darkening: Jupiter's photosphere-like cloud deck dims
+    // sharply toward the edge of the disk.
+    vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+    float mu = clamp(dot(normalWorld, viewDirection), 0.0, 1.0);
+    float limbDarkening = 0.5 + 0.5 * pow(mu, 0.65);
+
+    vec3 color = base * (0.035 + diffuse * 1.12 + forwardScatter) * limbDarkening;
+    float rim = pow(1.0 - mu, 2.2);
+    color += vec3(0.52, 0.63, 0.68) * rim * 0.05;
 
     gl_FragColor = vec4(color, 1.0);
     #include <tonemapping_fragment>

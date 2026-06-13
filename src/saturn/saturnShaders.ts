@@ -110,9 +110,14 @@ export const saturnFragmentShader = /* glsl */ `
 
     base *= 1.0 - approximateRingShadow * 0.42;
 
-    vec3 color = base * (0.035 + diffuse * 1.12 + forwardScatter);
-    float rim = pow(1.0 - max(dot(normalize(cameraPosition - vWorldPosition), normalWorld), 0.0), 2.4);
-    color += vec3(0.35, 0.42, 0.5) * rim * 0.08;
+    // Limb darkening dims the cloud deck toward the edge of the disk.
+    vec3 viewDirection = normalize(cameraPosition - vWorldPosition);
+    float mu = clamp(dot(normalWorld, viewDirection), 0.0, 1.0);
+    float limbDarkening = 0.55 + 0.45 * pow(mu, 0.6);
+
+    vec3 color = base * (0.035 + diffuse * 1.12 + forwardScatter) * limbDarkening;
+    float rim = pow(1.0 - mu, 2.4);
+    color += vec3(0.35, 0.42, 0.5) * rim * 0.06;
 
     gl_FragColor = vec4(color, 1.0);
     #include <tonemapping_fragment>

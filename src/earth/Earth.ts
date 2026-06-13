@@ -1,6 +1,7 @@
 import {
   ArrowHelper,
   BufferGeometry,
+  Color,
   Group,
   LineBasicMaterial,
   LineLoop,
@@ -12,12 +13,18 @@ import { createMoon, type MoonResult } from "./createMoon";
 import {
   EARTH_AXIAL_TILT_RAD,
   EARTH_ORBITAL_ELEMENTS,
+  EARTH_POLAR_TO_EQUATORIAL_RATIO,
   EARTH_ROTATION_ANGULAR_SPEED_RAD_PER_SECOND,
   MOON_MEAN_ANOMALY_AT_EPOCH_RAD,
   MOON_ORBIT_ANGULAR_SPEED_RAD_PER_SECOND
 } from "./earthConstants";
+import { createAtmosphereShell } from "../scene/createAtmosphereShell";
 import { calculateOrbitalState, sampleOrbitPath, type OrbitalState } from "../physics/orbitalMechanics";
-import { auToSceneDistance, SECONDS_PER_DAY } from "../physics/units";
+import {
+  auToSceneDistance,
+  EARTH_EQUATORIAL_RADIUS_SCENE_UNITS,
+  SECONDS_PER_DAY
+} from "../physics/units";
 import { TAU } from "../utils/math";
 
 export interface EarthUpdateState {
@@ -51,6 +58,16 @@ export class Earth {
     this.axialTiltGroup.name = "Earth axial tilt group";
     this.axialTiltGroup.rotation.z = EARTH_AXIAL_TILT_RAD;
     this.axialTiltGroup.add(this.earthMesh.mesh);
+    this.axialTiltGroup.add(
+      createAtmosphereShell({
+        radius: EARTH_EQUATORIAL_RADIUS_SCENE_UNITS,
+        polarScale: EARTH_POLAR_TO_EQUATORIAL_RATIO,
+        scaleFactor: 1.06,
+        color: new Color(0.35, 0.6, 1.0),
+        intensity: 0.9,
+        falloff: 3.4
+      })
+    );
     this.group.add(this.axialTiltGroup);
     this.group.add(this.moon.group);
 
